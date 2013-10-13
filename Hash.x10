@@ -21,7 +21,9 @@ public class Hash
 		h = new HashMap[long,long]();
 		defaultValue = defV;
 		pending = new ArrayList[long]();
-		map  = new Rail[Entry](Int.MAX_VALUE);
+		//takes waaaay too long, need to figure out a better size and scale down the hash function
+		//could do .hashCode()%map.length
+		//map  = new Rail[Entry](Int.MAX_VALUE);
 
 	}
 
