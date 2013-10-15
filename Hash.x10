@@ -13,18 +13,12 @@ public class Hash
 	private var h : HashMap[long,long];
 	private var counter : long;
 	private var defaultValue : Long; // a default value is returned when an element with a given key is not present in the dict.
-	private var pending:ArrayList[long];
-	private var map: Rail[Entry];
-
+	private var buffer:Rail[WorkRecord];
 	public def this(defV : long){
 		counter = 0n;
 		h = new HashMap[long,long]();
 		defaultValue = defV;
-		pending = new ArrayList[long]();
-		//takes waaaay too long, need to figure out a better size and scale down the hash function
-		//could do .hashCode()%map.length
-		//map  = new Rail[Entry](Int.MAX_VALUE);
-
+		buffer = new Rail[WorkRecord](8n);
 	}
 
     /**
