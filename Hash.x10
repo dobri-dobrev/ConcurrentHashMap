@@ -14,8 +14,10 @@ public class Hash
 	private var counter : long;
 	private var defaultValue : Long; // a default value is returned when an element with a given key is not present in the dict.
 	private var buffer:Rail[WorkRecord];
+	private var isL: Boolean;
 	public def this(defV : long){
 		counter = 0n;
+		isL = false;
 		h = new HashMap[long,long]();
 		defaultValue = defV;
 		buffer = new Rail[WorkRecord](8n);
