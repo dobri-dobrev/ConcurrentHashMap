@@ -1,0 +1,31 @@
+Dobri Dobrev and Dylan Drop
+dmd2169 and dhd2110
+========
+PROJECT 2
+========
+
+Note: In order to run, you must omit the -NO_CHECKS flag. This
+is due to some sort of X10 limitation which leads to a segmentation
+fault error. The -O flag still works.
+
+To run:
+
+make Hash 
+make test
+
+For this project we decided to use the flat combining technique discussed
+in class. What this means is that one thread does the work at a time
+(gets and puts) for each waiting thread. This reduces overhead significantly,
+allowing us to get / put roughly 1 million jobs per thread with 8 threads
+in 3 seconds. 
+
+When implementing this, we tried to increase performance by making get operations
+nonblocking. But what we found with this was that the flat combining inherently 
+prevented us from doing this, for a number of reasons. The most prominent was that
+our implementation of flat combining relied on a buffer that couldn't handle 
+multiple operations onto a result at a given time.
+
+If given more time, we would have tried to move the WorkRecord class out into
+a struct or numerical representation to reduce overhead. Also, we would have tried
+to make individual locks for each key instead of one global lock, which would have
+allowed more threads to work at a given time.
