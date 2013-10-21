@@ -25,6 +25,11 @@ prevented us from doing this, for a number of reasons. The most prominent was th
 our implementation of flat combining relied on a buffer that couldn't handle 
 multiple operations onto a result at a given time.
 
+Another approach we tried is a Bakery lock. You can see this implementation in _Hash.x10.
+We found that this approach took a very, very, long time to run with multiple processes
+but at least always spits out a correct answer.
+
+
 If given more time, we would have tried to move the WorkRecord class out into
 a struct or numerical representation to reduce overhead. Also, we would have tried
 to make individual locks for each key instead of one global lock, which would have
