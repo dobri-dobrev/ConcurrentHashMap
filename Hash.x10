@@ -2,6 +2,7 @@ import x10.util.Timer;
 import x10.util.ArrayList;
 import x10.util.HashMap;
 import x10.util.Pair;
+import x10.util.Box;
 /**
  * This is the class that provides the HashMap functionalities.
  *
@@ -16,12 +17,14 @@ public class Hash
 	private var defaultValue : Long; // a default value is returned when an element with a given key is not present in the dict.
 	private var buffer:Rail[WorkRecord];
 	private var isL: Boolean; //global lock
+
 	public def this(defV : long){
 		counter = 0n;
 		isL = false;
 		h = new HashMap[long,long]();
+        
 		defaultValue = defV;
-		buffer = new Rail[WorkRecord](8n);
+        buffer = new Rail[WorkRecord](8n);
 
 	}
 
@@ -37,30 +40,36 @@ public class Hash
     {
  	    var position:long = Runtime.workerId();
  	    buffer(position) = new WorkRecord(true, key, value);
- 	    while(buffer(position).result== 0 && isL){
- 	    	System.threadSleep(POLL_TIME);
- 	    }
- 	    if(buffer(position).result== 0){
- 	    	isL = true;
- 	    	executeTasks();
- 	    	isL = false;
+        var brea:long = 500L;
+        while(buffer(position).isDone == false){
+            if(isL==true && brea>0L){
+                System.threadSleep(POLL_TIME);
+                brea--;
+            }
+            //b.lock(position);
+            
+            atomic{
+                if(brea==0L)
+                    isL = false;
+                if(isL == false&& buffer(position).isDone == false){
+                    isL = true;
+                    if(buffer(position).isDone == false)
+                        executeTasks();
+                    isL = false;
+                }
+            }
+            
+            
+            
+        }
 
- 	    }
  	    
- 	    return buffer(position).id;
+        val i = buffer(position).id;
+ 	    buffer(position) = null;
+ 	    return i;
  	    
 
- 	    //printBuffer();
-		
-		// var r : long = -1;
-
-		// atomic{
-		// 	r = ++counter;
-		// 	h.put(key,value);
-			
-		// }
-		// buffer(position) = null;
-		// return r;
+ 	   
 
     }
 
@@ -78,58 +87,75 @@ public class Hash
     {
     	var position:long = Runtime.workerId();
  	    buffer(position) = new WorkRecord(false, key, 0);
- 	    while(buffer(position).result== 0 && isL){
- 	    	System.threadSleep(POLL_TIME);
+        buffer(position).isDone= false;
+        var brea:long = 500L;
+        while(buffer(position).isDone == false){
+            if(isL==true && brea>0L){
+                 System.threadSleep(POLL_TIME);
+                 brea--;
+            }
+            atomic{
+                if(brea==0L)
+                    isL = false;
+                if(isL==false && buffer(position).isDone == false){
+                    isL = true;
+                    if(buffer(position).isDone == false)
+                        executeTasks();
+                    isL = false;
+                }
+                
+            }
+           
+            
 
- 	    }
- 	    if(buffer(position).result== 0){
- 	    	isL = true;
- 	    	executeTasks();
- 	    	isL = false;
-
- 	    }
- 	    return new Pair[long,long](buffer(position).id, buffer(position).result);
-		// var i:long = -1;
-		// var value:long = defaultValue;
-		
-
-		// atomic{
-		// 	i = ++counter;
-		// 	val boxedValue = h.get(key);
-		// 	try{
-		// 		value = boxedValue();
-		// 	}catch(Exception){}
-		// }
+        }
+        val i = buffer(position).id;
+        val r = buffer(position).result;
+        buffer(position) = null;
+ 	    return new Pair[long,long](i,r);
 
         
     }
     private def executeTasks(){
-    	for(var i:long = 0; i<buffer.size; i++){
-    		if(buffer(i)!= null){
-    			if(buffer(i).isPut){
-    				if(buffer(i).result==0){
-    					atomic{
-    						buffer(i).id = ++counter;
-    						h.put(buffer(i).key, buffer(i).value);
-    						buffer(i).result = 1; //ready to be shipped out
-    					}
-    				}
-    			}
-    			else{
-    				if(buffer(i).result==0){
-    					atomic{
-    						val boxedValue = h.get(buffer(i).key);
-    						buffer(i).id = ++counter;
-    						try{
-    							buffer(i).result = boxedValue();
-    						}
-    						catch(Exception){}
-    					}
-    				}
+    	atomic{
+               for(var i:long = 0; i<buffer.size; i++){
+                if(buffer(i)!= null){
+                    if(buffer(i).isPut==true){
+                        if(buffer(i).isDone==false){
+                           
+                                buffer(i).id = ++counter;
+                               
+                                h.put(buffer(i).key, buffer(i).value);
+                                buffer(i).isDone = true;
+                            
+                        }
+                    }
+                    else{
+                        if(buffer(i).isDone==false){
+                            
+                                var boxedValue:Box[long] = h.get(buffer(i).key);
+                                
+                                try{
+                                    buffer(i).result = boxedValue();
+                                       buffer(i).id = ++counter;
+                                       buffer(i).isDone = true;
 
-    			}
-    		}
-    	}
+                                }
+                                catch(Exception){
+                                      
+                                       buffer(i).result = defaultValue;
+                                       buffer(i).id = ++counter;
+                                       buffer(i).isDone = true;   
+                                   }
+                                   
+                            
+                        }
+
+                    }
+                }
+            } 
+        }
+        
 
     }
 

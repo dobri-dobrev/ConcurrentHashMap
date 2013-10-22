@@ -15,6 +15,7 @@ public class Hash
 	private var defaultValue : Long; // a default value is returned when an element with a given key is not present in the dict.
 	private var buffer:Rail[WorkRecord];
 	private var isL: Boolean; //global lock
+    private var locks:Rail[long];
     val b: Bakery;
 	public def this(defV : long){
 		counter = 0n;
@@ -23,6 +24,7 @@ public class Hash
 		defaultValue = defV;
 		buffer = new Rail[WorkRecord](8n);
         b = new Bakery(8);
+        locks = new Rail[long](1000);
 	}
 
     /**
@@ -35,6 +37,8 @@ public class Hash
     //single thread buffer never gets overoccupied
     public def put(key: long, value: long) : long
     {
+        
+        //locks(key)=1L;
  	    var position:long = Runtime.workerId();
  	    buffer(position) = new WorkRecord(true, key, value);
 
@@ -43,6 +47,7 @@ public class Hash
         h.put(buffer(position).key, buffer(position).value);
         buffer(position).result = 1; //ready to be shipped out
         b.unlock(position);
+        //locks(key) = 0L;
 
  	    return buffer(position).id;
 
@@ -61,19 +66,26 @@ public class Hash
     public def get(key: long) : Pair[long,long]
     {
     	var position:long = Runtime.workerId();
- 	    buffer(position) = new WorkRecord(false, key, 0);
-
-        b.lock(position);
-        val boxedValue = h.get(buffer(position).key);
-        buffer(position).id = ++counter;
-        try{
-            buffer(position).result = boxedValue();
+ 	    //buffer(position) = new WorkRecord(false, key, 0);
+        while(locks(key)==1){
+            System.threadSleep(1);
         }
-        catch(Exception){}
+        b.lock(position);
+        locks(key) = 1;
+        var result:long = 0;
+        val boxedValue = h.get(key);
+        var count:long = ++counter;
+        try{
+            result = boxedValue();
+        }
+        catch(Exception){
+            result = defaultValue;
+        }
+        locks(key) = 0;
         b.unlock(position);
 
  	    
- 	    return new Pair[long,long](buffer(position).id, buffer(position).result);
+ 	    return new Pair[long,long](count, result);
 
         
     }

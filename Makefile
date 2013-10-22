@@ -6,7 +6,7 @@ Hash: Main.x10 Hash.x10
 	$(X10C) ${FLAGS} -o $@ $^
 
 test: Hash
-	./Hash
+	./Hash 
 
 clean:
 	rm -f Hash *.h *.out *.err *.log *~ *.cc

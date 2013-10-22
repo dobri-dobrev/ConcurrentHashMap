@@ -109,7 +109,7 @@ public class Main
 						val orderValue = h.get(key);  //this is a tuple < order , value > 
 						order = orderValue.first;
 						value = orderValue.second;
-						//Console.OUT.println("Thread "+i+" Fetched <"+key+","+value+"> = "+order);
+						//Console.OUT.println("Thread "+i+" Fetched <"+key+","+value+"> = "+order+ " worker id is " + Runtime.workerId());
 					}
 					log(i).add( new LogEntry( direction , order, key, value) );
 				}
@@ -140,7 +140,13 @@ public class Main
 								}catch(Exception){
 									value = defaultValue;
 								}
-								assert(value == v.value);
+								try{
+									assert(value == v.value);	
+								}
+								catch(AssertionError){
+									Console.OUT.println(value + " "+ v.value + " "+ v.order);
+								}
+								
 							}
 						}
 					}

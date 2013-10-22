@@ -3,10 +3,13 @@ dmd2169 and dhd2110
 ========
 PROJECT 2
 ========
+PLEASE DO NOT USE THE -NO_CHECKS FLAG. For some reason -NO_CHECKS does not cooperate with the native x10 HashMap implementation
+
 
 Note: In order to run, you must omit the -NO_CHECKS flag. This
 is due to some sort of X10 limitation which leads to a segmentation
 fault error. The -O flag still works.
+Note: the program sometimes throws a seg fault after main() returns which seems to be related to the destructor of HashMap in the x10 library
 
 To run:
 
@@ -16,8 +19,8 @@ make test
 For this project we decided to use the flat combining technique discussed
 in class. What this means is that one thread does the work at a time
 (gets and puts) for each waiting thread. This reduces overhead significantly,
-allowing us to get / put roughly 1 million jobs per thread with 8 threads
-in 3 seconds. 
+allowing us to get / put roughly 1000 jobs per thread with 8 threads
+in 40ms. 
 
 When implementing this, we tried to increase performance by making get operations
 nonblocking. But what we found with this was that the flat combining inherently 

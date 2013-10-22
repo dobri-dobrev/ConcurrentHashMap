@@ -6,18 +6,22 @@
 class Bakery {
     private var flag:Rail[Boolean];
     private var label:Rail[Long];
+    private var max:long;
     
     public def this(n:Long) {
       flag = new Rail[Boolean](n,false);
       label = new Rail[Long](n,0L);
+      max = 0;
     }
 
     private def nextLabel() {
-      var max:Long = 0;
-      for (var i:Long = 0; i < label.size; i++) {
-          if (label(i) > max) max = label(i);
-      }
-      return max+1;
+      // var max:Long = 0;
+      // for (var i:Long = 0; i < label.size; i++) {
+      //     if (label(i) > max) max = label(i);
+      // }
+      //return max+1;
+      max++;
+      return max;
     }
 
     private def someoneElseFirst(i:Long) {

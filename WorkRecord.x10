@@ -11,7 +11,7 @@ public class WorkRecord{
             isPut  = isP;
 			key    = k;
             value         = v;
-            result = 0L;
+            result = -50L;
             id = 0L;
         }
 	
